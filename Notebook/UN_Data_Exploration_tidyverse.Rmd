@@ -1,0 +1,120 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+```
+
+1.Using the read_csv() function, read the GDP dataset into your notebook as a tibble called gdp_df. After reading it in, inspect the first 10 rows and then inspect the last 10 rows.
+
+```{r}
+gdp_df <- read.csv('../data/gdp_per_capita.csv')
+head(gdp_df,10)
+```
+
+2. Drop the 'Value Footnotes' column, and rename the remaining columns to 'Country', 'Year', and 'GDP_Per_Capita'.
+
+
+```{r}
+gdp_df <- gdp_df %>%
+  rename("Country" = "Country.or.Area", "GDP_Per_Capita" = "Value") %>%
+  select(-"Value.Footnotes")
+gdp_df
+```
+3.Which years are represented in this data set? How many observations are there per year? Make a plot to view the number of observations per year.
+
+```{r}
+gdp_df %>%
+  distinct(Year)
+```
+How many observations are there per year?
+
+```{r}
+count_df <- gdp_df %>%
+  group_by(Year) %>%
+  summarize(counts = n())
+
+count_df
+```
+Make a plot to view the number of observations per year
+
+```{r}
+ggplot(count_df, aes(x=Year, y=counts)) +  geom_col()
+
+```
+
+4.How many countries are represented in this dataset? Which countries have the fewest observations?
+```{r}
+gdp_df %>%
+  summarise(count_countries = n_distinct(Country))
+```
+Which countries have the fewest observations?
+```{r}
+gdp_df %>%
+  group_by(Country) %>%
+  summarize(counts = n()) %>%
+  arrange(desc(counts))
+  
+```
+
+5.Create a new tibble by subsetting gdp_df to just the year 2021. Call this new tibble gdp_2021.
+```{r}
+gdp_2021 <- gdp_df %>%
+  filter(Year == 2021)
+
+gdp_2021
+```
+6.Use summary() to find the summary statistics for GDP per capita in 2021.
+```{r}
+gdp_2021 %>%
+  summarise(counts = n(),Median_gdp = median(GDP_Per_Capita),minGDP = min(GDP_Per_Capita),maxGdp = max(GDP_Per_Capita),meanGDP = mean(GDP_Per_Capita),StdGDP = sd(GDP_Per_Capita))
+```
+
+7.Create a histogram of GDP Per Capita numbers for 2021 (you may wish to adjust the number of bins for your histogram).
+```{r}
+ ggplot(gdp_2021, aes(x=GDP_Per_Capita))+  geom_histogram(bins = 30)
+```
+8.Find the top 5 counties and bottom 5 countries by GDP per capita in 2021.
+
+```{r}
+gdp_2021 %>% top_n(5)
+```
+```{r}
+gdp_2021 %>% top_n(-5)
+```
+
+9.Now, return to the full dataset, gdp_df. Pivot the data for 1990 and 2021 (using pivot_wider() function) so that each row corresponds to a country, each column corresponds to a year, and the values in the table give the GDP_Per_Capita amount. Drop any rows that are missing values for either 1990 or 2021. Save the result to a tibble named gdp_pivoted.
+
+```{r}
+gdp_pivoted <- gdp_df %>% 
+    filter(Year == 1990 | Year ==2021) %>%
+      pivot_wider(names_from = Year,values_from = GDP_Per_Capita) %>%
+      filter(across(everything(), ~ !is.na(.)))
+
+gdp_pivoted
+```
+
+10.Create a new column in gdp_pivoted named Percent_Change. This column should contain the percent change in GDP_Per_Capita from 1990 to 2021. Hint: Percent change is calculated as 100*(New Value - Old Value) / Old Value.
+```{r}
+gdp_pivoted <- gdp_pivoted %>%
+    mutate(percent_change = (100 * ((`2021` - `1990`)/`1990` )))
+
+gdp_pivoted
+```
+11.How many countries experienced a negative percent change in GDP per capita from 1990 to 2021?
+```{r}
+
+gdp_pivoted %>%
+  filter(percent_change < 0) %>%
+  summarise(Tot_countries_Neg_percent_change = n())
+```
+12.Which country had the highest % change in GDP per capita? Create a line plot showing these country's GDP per capita for all years for which you have data. Put both line charts on the same plot.
+
+```{r}
+gdp_pivoted %>%
+  arrange(desc(percent_change))
+```
+
