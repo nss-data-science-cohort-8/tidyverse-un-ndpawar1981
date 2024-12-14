@@ -6,6 +6,7 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
+
 ```
 
 1.Using the read_csv() function, read the GDP dataset into your notebook as a tibble called gdp_df. After reading it in, inspect the first 10 rows and then inspect the last 10 rows.
@@ -114,7 +115,87 @@ gdp_pivoted %>%
 12.Which country had the highest % change in GDP per capita? Create a line plot showing these country's GDP per capita for all years for which you have data. Put both line charts on the same plot.
 
 ```{r}
+gdp_pivoted <- gdp_pivoted %>%
+    mutate(percent_change = as.numeric(percent_change))
+
 gdp_pivoted %>%
-  arrange(desc(percent_change))
+  arrange(desc(percent_change)) %>%
+  top_n(3)
+```
+
+```{r}
+gdp_china <- gdp_df %>%
+    filter(Country == "China") 
+
+gdp_Guinea <- gdp_df %>%
+    filter(Country == "Equatorial Guinea") 
+
+ggplot() +
+  geom_line(data = gdp_china,aes(x=Year,y=GDP_Per_Capita),color="red")+
+  geom_line(data = gdp_Guinea,aes(x=Year,y=GDP_Per_Capita),color="blue")
+
+```
+
+13.Read in continents.csv contained in the data folder into a new tibble called continents. We will be using this tibble to add a new column to our dataset.
+
+```{r}
+continents <- read.csv("../data/continents.csv")
+continents
+```
+14.Merge gdp_df and continents. Keep only the countries that appear in both data frames. Save the result back to gdp_df.
+
+```{r}
+gdp_df <- inner_join(gdp_df, continents, by ='Country')
+gdp_df
+```
+
+15.Determine the number of countries per continent. Create a bar chart showing this.
+
+```{r}
+continent_df <- gdp_df %>%
+  distinct(Continent,Country) %>%
+  group_by(Continent)%>%
+  summarize(counts = n())
+
+
+ggplot(continent_df,aes(x=Continent,y=counts))+geom_col()
+```
+16.Create a boxplot showing GDP per capita in 2021 split out by continent. What do you notice?
+
+```{r}
+gdp_2021_cont_df <- gdp_df %>%
+  filter(Year == 2021) %>%
+  arrange(Continent)
+
+ggplot(gdp_2021_cont_df, aes(x=GDP_Per_Capita,y=Continent)) + geom_boxplot()
+```
+Obsrvations:
+1) African continent having most countries there, has very less GDP per capita. There are few outliers in that continent.
+2) Oceania and South America continents have less GDP. We can see couple outliers for Oceania continent.
+3) Asia , North America, and Europe have few outlier coutries whose GDP per capita is way more than compared to their respective other countries.
+4) Most of the boxes are right skewed from distribution stand point.
+
+
+17.Read life_expectancy.csv into a tibble named life_expectancy. Do not modify the csv file in order to read this data in.
+
+```{r}
+life_expectancy <- read.csv("../data/life_expectancy.csv",skip = 4,check.names = FALSE)
+
+life_expectancy
+```
+18.Drop the Country Code, Indicator Name, and Indicator Code columns. Then use pivot_longer to convert your data from wide to long. That is, instead of having one row per country and multiple colums per year, we want to have multiple rows per country and a single column for year. After melting, rename the columns to Country, Year, and Life_Expectancy.
+
+```{r}
+# Create a vector with columns desired:
+df_col_num <- c(1,5:69)
+
+life_expectancy %>%
+  select(df_col_num)
+```
+
+```{r}
+
+
+
 ```
 
