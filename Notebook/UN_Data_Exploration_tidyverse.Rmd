@@ -187,15 +187,109 @@ life_expectancy
 
 ```{r}
 # Create a vector with columns desired:
-df_col_num <- c(1,5:69)
+#removed 2023 as it cotains NA
+df_col_num <- c(1,5:68)
 
-life_expectancy %>%
+life_expectancy_df_new <- life_expectancy %>%
   select(df_col_num)
+
+life_expectancy_df_new <- life_expectancy_df_new %>%
+  pivot_longer(!`Country Name`, names_to = "Year", values_to = "Life_Expectancy") %>%
+  rename(Country = `Country Name`)
+
+life_expectancy_df_new
+```
+
+19.What was the first country with a life expectancy to exceed 80?
+```{r}
+life_expectancy_df_new %>%
+  filter(Life_Expectancy > 80) %>%
+  arrange((Year)) %>%
+  head(1)
+
+
+
+```
+Japan was the first country to exceed the life expectancy of 80
+
+
+20.Merge gdp_df and life_expectancy, keeping all countries and years that appear in both tibbles. Save the result to a new tibble named gdp_le. If you get any errors in doing this, read them carefully and correct them. Look at the first five rows of your new data frame to confirm it merged correctly. Also, check the last five rows to make sure the data is clean and as expected.
+
+```{r}
+life_expectancy_df_new <- life_expectancy_df_new %>%
+mutate(Year = as.numeric(Year))
+
+gdp_le <- inner_join(gdp_df, life_expectancy_df_new, by = c("Country","Year"))
+gdp_le
+```
+
+21.Create a new tibble, named gdp_le_2021 by extracting data for the year 2021 from gdp_le. How many countries have a life expectancy of at least 80 in 2021?
+
+```{r}
+gdp_le_2021 <- gdp_le %>%
+  filter(Year == 2021)
+
+gdp_le_2021
 ```
 
 ```{r}
+gdp_le_2021 %>%
+  filter(Life_Expectancy > 80) %>%
+  count(Country)%>%
+  summarise(totalCountries = sum(n))
+```
+22.Find the countries that had the top 3 largest GDP per capita figures for 2021. Create a plot showing the change in life expectancy over time for these three countries. This plot should be faceted so that each country is contained in its own figure.
 
+```{r}
+gdp_le_2021 %>%
+  arrange(desc(GDP_Per_Capita)) %>%
+  head(3) %>%
+  select(Country)
+```
 
+```{r}
+gdp_le_facet <- gdp_le %>%
+  filter(Country == 'Luxembourg' | Country == 'Singapore' | Country == 'Ireland')
+
+ggplot(gdp_le_facet, aes(x=Year, y=Life_Expectancy)) +  geom_point()+  facet_wrap(~Country) 
+```
+23.Create a scatter plot of Life Expectancy vs GDP per Capita for the year 2021. What do you notice?
+
+```{r}
+ggplot(gdp_le_2021, aes(x=GDP_Per_Capita, y=Life_Expectancy)) +  geom_point()
 
 ```
+Observation:
+
+The life expectancy is increasing as there is increase in GDP per Capita . There is slightly positive relation but it is a curve in nature.
+
+
+24. Find the correlation between Life Expectancy and GDP per Capita for the year 2021. What is the meaning of this number?
+
+```{r}
+gdp_le_2021%>%
+  na.omit(gdp_le_2021) %>%
+  select(Life_Expectancy,GDP_Per_Capita)%>%
+  cor()
+```
+25.Add a column to gdp_le_2021 and calculate the logarithm of GDP per capita. Find the correlation between the log of GDP per capita and life expectancy. How does this compare to the calculation in the previous part? Look at a scatter plot to see if the result of this calculation makes sense.
+
+```{r}
+gdp_le_2021 <- gdp_le_2021 %>%
+  mutate(log_gdp_per_capita = log(GDP_Per_Capita))
+
+```
+```{r}
+gdp_le_2021%>%
+  na.omit(gdp_le_2021) %>%
+  select(Life_Expectancy,log_gdp_per_capita)%>%
+  cor()
+```
+
+```{r}
+ggplot(gdp_le_2021, aes(x=log_gdp_per_capita, y=Life_Expectancy)) +  geom_point()
+```
+Observation:
+After looking at the scatter plot, the relation was changed to strong positive relationship. It appears that converting 
+obervation to the logarithmic sclae makes more sense for higher numeric values
 
